@@ -1,12 +1,6 @@
 ---
-- name: Run playbook to get published collections
-  import_playbook: kk_at_redhat.awxexport.aap_audit_collections.yml
-
 - name: Run playbook to get controller settings
   import_playbook: kk_at_redhat.awxexport.aap_audit_settings.yml
-
-- name: Run playbook to get authentication settings
-  import_playbook: kk_at_redhat.awxexport.aap_audit_authentication.yml
 
 - name: Run playbook to get users
   import_playbook: kk_at_redhat.awxexport.aap_audit_users.yml
