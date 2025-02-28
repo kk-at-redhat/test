@@ -1,3 +1,4 @@
 ---
 collections:
   - name: kk_at_redhat.aapconfig
+  - name: configify.aapconfig
