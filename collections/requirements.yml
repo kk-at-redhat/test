@@ -1,4 +1,3 @@
 ---
 collections:
-  - name: kk_at_redhat.aapconfig
-  - name: configify.aapconfig
+  - name: kk_at_redhat.awxexport
