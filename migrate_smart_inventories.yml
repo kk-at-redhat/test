@@ -1,0 +1,36 @@
+---
+- name: INVENTORIES - Get smart inventories in constructred format
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+    - name: INVENTORIES - Build list with all smart inventories
+      ansible.builtin.set_fact:
+        controller_objects_inventories_constructed: "{{ controller_objects_inventories_constructed | default([]) +
+                                                        [{'name': item.name,
+                                                          'descr': item.description,
+                                                          'org': item.summary_fields.organization.name,
+                                                          'input': lookup('ansible.controller.controller_api',
+                                                                          'inventories/' +
+                                                                            item.id | string +
+                                                                            '/hosts/',
+                                                                          return_objects=false,
+                                                                          return_all=true).results |
+                                                                   selectattr('summary_fields.inventory.name') |
+                                                                   map(attribute='summary_fields.inventory.name') | unique,
+                                                          'source_vars': {'plugin': 'constructed', 'strict': True},
+                                                          'limit': '',
+                                                          'source': ''} |
+                                                        regex_replace('\n', '')] }}"
+      loop: "{{ lookup('ansible.controller.controller_api', 'inventories/', return_objects=false, return_all=true).results }}"
+      loop_control:
+        label: " | inventory: {{ item.name }}"
+      when: item.kind == "smart"
+
+    - name: INVENTORIES - Show new constructed inventories
+      ansible.builtin.debug:
+        var: controller_objects_inventories_constructed
+      when: >
+            controller_objects_inventories_constructed is defined and
+            controller_objects_inventories_constructed and
+            not show_vars_at_the_end | default(false)
