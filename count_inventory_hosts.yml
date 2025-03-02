@@ -13,7 +13,8 @@
                                                                               item.id | string +
                                                                               '/hosts/',
                                                                             return_objects=false,
-                                                                            return_all=true).results | length} |
+                                                                            return_all=true,
+                                                                            max_objects=10000).results | length} |
                                                      regex_replace('\n', '')] }}"
       loop: "{{ lookup('ansible.controller.controller_api', 'inventories/', return_objects=false, return_all=true).results }}"
       loop_control:
