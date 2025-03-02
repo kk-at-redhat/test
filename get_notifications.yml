@@ -1,3 +1,3 @@
 ---
 - name: Run playbook to get notification profiles
-  import_playbook: kk_at_redhat.awxexport.aap_audit_notification_profiles.yml
+  import_playbook: kk_at_redhat.awxexport.awx_audit_notification_profiles.yml
