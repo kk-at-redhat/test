@@ -8,28 +8,41 @@
       ansible.builtin.set_fact:
         aap_inventories: "{{ lookup('ansible.controller.controller_api', 'inventories', return_objects=false, return_all=true).results }}"
 
-    - ansible.builtin.debug:
-        var: aap_inventories
-
-    - name: INVENTORIES - Build smart inventories list
+    - name: INVENTORIES - List names
       ansible.builtin.debug:
-        var: item.name
+        msg: "{{ item.name }}"
       loop: "{{ aap_inventories }}"
       loop_control:
         label: " | inventory: {{ item.name }}"
       when: item.host_filter
 
-    - name: INVENTORIES - Build smart inventories list
+    - name: INVENTORIES - List variables
       ansible.builtin.debug:
-        var: item.variables
+        msg: "{{ item.variables }}"
       loop: "{{ aap_inventories }}"
       loop_control:
         label: " | inventory: {{ item.name }}"
       when: item.host_filter
 
-    - name: INVENTORIES - Build smart inventories list
+    - name: INVENTORIES - List host filters
       ansible.builtin.debug:
-        var: item.host_filter | default('')
+        msg: "{{ item.host_filter | default('') }}"
+      loop: "{{ aap_inventories }}"
+      loop_control:
+        label: " | inventory: {{ item.name }}"
+      when: item.host_filter
+
+    - name: INVENTORIES - List orgs
+      ansible.builtin.debug:
+        msg: "{{ item.summary_fields.organization.name }}"
+      loop: "{{ aap_inventories }}"
+      loop_control:
+        label: " | inventory: {{ item.name }}"
+      when: item.host_filter
+
+    - name: INVENTORIES - List descriptions
+      ansible.builtin.debug:
+        msg: "{{ item.description }}"
       loop: "{{ aap_inventories }}"
       loop_control:
         label: " | inventory: {{ item.name }}"
