@@ -8,46 +8,6 @@
       ansible.builtin.set_fact:
         aap_inventories: "{{ lookup('ansible.controller.controller_api', 'inventories', return_objects=false, return_all=true).results }}"
 
-    - name: INVENTORIES - List names
-      ansible.builtin.debug:
-        msg: "{{ item.name }}"
-      loop: "{{ aap_inventories }}"
-      loop_control:
-        label: " | inventory: {{ item.name }}"
-      when: item.host_filter
-
-    - name: INVENTORIES - List variables
-      ansible.builtin.debug:
-        msg: "{{ item.variables }}"
-      loop: "{{ aap_inventories }}"
-      loop_control:
-        label: " | inventory: {{ item.name }}"
-      when: item.host_filter
-
-    - name: INVENTORIES - List host filters
-      ansible.builtin.debug:
-        msg: "{{ item.host_filter | default('') }}"
-      loop: "{{ aap_inventories }}"
-      loop_control:
-        label: " | inventory: {{ item.name }}"
-      when: item.host_filter
-
-    - name: INVENTORIES - List orgs
-      ansible.builtin.debug:
-        msg: "{{ item.summary_fields.organization.name }}"
-      loop: "{{ aap_inventories }}"
-      loop_control:
-        label: " | inventory: {{ item.name }}"
-      when: item.host_filter
-
-    - name: INVENTORIES - List descriptions
-      ansible.builtin.debug:
-        msg: "{{ item.description }}"
-      loop: "{{ aap_inventories }}"
-      loop_control:
-        label: " | inventory: {{ item.name }}"
-      when: item.host_filter
-
     - name: INVENTORIES - Build smart inventories list
       ansible.builtin.set_fact:
         controller_objects_inventories_smart: "{{ controller_objects_inventories_smart | default([]) +
@@ -58,7 +18,6 @@
                                                                     else item.variables | from_yaml,
                                                     'host_filter': item.host_filter} |
                                                     regex_replace('\n', '')] }}"
-        aap_inventories_processed: "{{ aap_inventories_processed | default([]) + [item] }}"
       loop: "{{ aap_inventories }}"
       loop_control:
         label: " | inventory: {{ item.name }}"
@@ -94,16 +53,11 @@
       ansible.builtin.set_fact:
         controller_objects_inventories_dynamic_raw: "{{ controller_objects_inventories_dynamic_raw | default([]) +
                                                         [inventories_filtered | combine({'sources': item}, recursive=true)] }}"
-        aap_inventories_processed: "{{ aap_inventories_processed | default([]) + inventories_filtered }}"
       loop: "{{ controller_objects_inventory_sources | default([]) }}"
       loop_control:
         label: " | inventory source: {{ item.name }}"
       vars:
         inventories_filtered: "{{ aap_inventories | selectattr('name', 'equalto', item.inventory) }}"
-
-    - name: INVENTORIES - Remove processed inventories
-      ansible.builtin.set_fact:
-        aap_inventories: "{{ aap_inventories | difference(aap_inventories_processed | default([])) }}"
 
     - name: INVENTORIES - Build dynamic inventories list
       ansible.builtin.set_fact:
@@ -170,11 +124,15 @@
                                                                                                        'variables']) |
                                                                        kk_at_redhat.awxexport.convert_yaml_fields(fields=['variables'])},
                                                                      recursive=true)] }}"
-      when: item.summary_fields.inventory.name in aap_inventories | map(attribute='name')
+      when: >
+            not group_inventory.kind and
+            not group_inventory.has_inventory_sources
       loop: "{{ lookup('ansible.controller.controller_api', 'groups', return_objects=false, return_all=true).results }}"
       loop_control:
         label: " | inventory: {{ item.summary_fields.inventory.name }} ->
                    group: {{ item.name }}"
+      vars:
+        group_inventory: "{{ aap_inventories | selectattr('name', 'equalto', item.summary_fields.inventory.name) | last }}"
 
     - name: INVENTORIES - Build static inventories list
       ansible.builtin.set_fact:
@@ -210,6 +168,9 @@
       loop: "{{ aap_inventories }}"
       loop_control:
         label: " | inventory: {{ item.name }}"
+      when: >
+            not item.has_inventory_sources and
+            not item.kind
 
     - name: INVENTORIES - Show smart inventories list (formatted)
       ansible.builtin.debug:
